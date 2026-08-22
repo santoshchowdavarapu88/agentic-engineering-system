@@ -1,12 +1,10 @@
 # syntax=docker/dockerfile:1.7
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /workspace
-COPY .mvn .mvn
-COPY mvnw pom.xml ./
-RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
-RUN ./mvnw -B -ntp dependency:go-offline
+COPY pom.xml ./
+RUN --mount=type=cache,target=/root/.m2 mvn -B -ntp dependency:go-offline
 COPY src src
-RUN ./mvnw -B -ntp -DskipTests package
+RUN --mount=type=cache,target=/root/.m2 mvn -B -ntp -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine
 RUN addgroup -S agentic && adduser -S agentic -G agentic
