@@ -16,8 +16,14 @@ is the primary product.
 - Safe-stop workflow state
 - Append-only in-memory decision lineage
 - Pluggable task-handler boundary for later logical agents
+- Approved repository-root enforcement and traversal protection
+- Revision-isolated workspaces with immutable baseline snapshots
+- SHA-256 manifests, cleanliness checks and verified rollback
+- Controlled file listing, text reading and bounded code search
+- Brownfield component, API, persistence and data-flow mapping
+- Requirement-relevant bounded repository context for later model prompts
 
-Model-backed reasoning, controlled repository/patch/build tools, durable audit
+Model-backed reasoning, controlled patch/build tools, durable audit
 storage, dynamic replanning and the three executable assessment scenarios are
 delivered in later commits.
 

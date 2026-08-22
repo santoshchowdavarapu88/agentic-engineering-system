@@ -14,5 +14,12 @@ spring:
 agentic:
   workspace:
     root: ${java.io.tmpdir}/agentic-engineering-tests
+    max-files: 1000
+    max-bytes: 10485760
+  repository:
+    allowed-root: ${java.io.tmpdir}/agentic-scenario-tests
+    max-read-characters: 50000
+    max-search-results: 50
+    max-context-characters: 30000
   model:
     provider: deterministic
