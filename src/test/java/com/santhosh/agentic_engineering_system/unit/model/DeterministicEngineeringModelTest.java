@@ -103,6 +103,25 @@ class DeterministicEngineeringModelTest {
                         .contains("Compilation failed"));
     }
 
+    @Test
+    void repairScenarioProducesFailingBehaviorThenCorrectsIt() {
+        RepositoryContext repository = new RepositoryContext(
+                "Run the repair scenario", repository().repositoryMap(),
+                repository().relevantFiles(), repository().characterCount());
+        EngineeringPlan plan = model.createPlan(repository);
+        PatchProposal initial = model.generateImplementation(plan, repository);
+
+        assertThat(initial.changes().getFirst().content())
+                .contains("BROKEN_AGENT_OUTPUT");
+
+        PatchProposal repaired = model.repair(plan, initial,
+                new ValidationFailure("maven clean test", 1,
+                        "Generated test failed", "expected implemented"), repository);
+        assertThat(repaired.changes().getFirst().content())
+                .contains("return \"implemented\"")
+                .doesNotContain("BROKEN_AGENT_OUTPUT");
+    }
+
     private RepositoryContext repository() {
         return new RepositoryContext(
                 "Add total redirect analytics",

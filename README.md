@@ -4,6 +4,9 @@ A controlled agentic software-engineering platform demonstrated through URL
 shortener engineering scenarios. The platform, rather than the URL shortener,
 is the primary product.
 
+See [Architecture](docs/ARCHITECTURE.md) for the control loop, agent/model
+boundary, trust boundaries, validation evidence and current limitations.
+
 ## Current capabilities
 
 - Explicit dependency graph with cycle and missing-dependency validation
@@ -41,11 +44,19 @@ is the primary product.
 - Same-filesystem atomic writes with verified workspace rollback on failure
 - Combined implementation/test patch application inside the isolated revision
 - Changed-file and diff evidence returned by the workflow API
+- Fixed-capability Maven execution inside the isolated repository
+- Command timeout, output bounds and model-credential stripping
+- Captured exit code, duration, timeout and full bounded build log
+- Validation artifacts written for every attempt
+- Compiler/test evidence passed to the repair agent
+- Baseline restoration, corrected patch application and bounded revalidation
+- Runnable Spring Boot URL-shortener fixture with baseline tests
 
 The agents now run as one stateful engineering workflow and safely apply their
-structured source/test proposals inside an isolated revision. They do not yet
-execute build commands; executable validation, failure-driven repair, durable
-audit storage and the three assessment scenarios are delivered later.
+structured source/test proposals inside an isolated revision. Generated changes
+are compiled and tested; failures alter the next action by invoking repair and
+revalidation. Durable audit storage and the complete three-scenario reviewer
+harness are delivered later.
 
 ## Model providers
 
@@ -79,12 +90,20 @@ Repository analysis
         |
         v
 Architecture
-      /   \
-     v     v
-Implementation  Test generation
-      \   /
-       v v
-Validation -> Documentation -> Human approval -> Completion
+        |
+        v
+Implementation
+      /       \
+     v         v
+Test generation  Documentation
+     |
+     v
+Controlled patch -> Maven validation
+                         |
+             failure -> Repair agent -> rollback/reapply -> retry
+                         |
+                         v
+             Human approval -> Completion
 ```
 
 Tasks become runnable only when their dependencies and entry gate pass.
@@ -139,11 +158,34 @@ $workflow = Invoke-RestMethod `
     repositoryPath = "url-shortener"
   } | ConvertTo-Json)
 
-$workflow | Select-Object id, status, contextRevision
+$workflow | Select-Object id, status, contextRevision, validationAttempts, repaired
 $workflow.tasks | Format-Table id, type, status, attempts, approvalRequired
 $workflow.changedFiles
 $workflow.diff
 ```
+
+Every normal deterministic run reports `validationAttempts = 1` and
+`repaired = false`. To exercise failure-driven adaptation, submit a requirement
+containing the explicit phrase `repair scenario`. Deterministic mode first
+generates a behavior that fails its generated test, then uses that real Maven
+failure to repair and revalidate the patch:
+
+```powershell
+$repair = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/api/v1/engineering-workflows" `
+  -ContentType "application/json" `
+  -Body (@{
+    scenarioType = "BROWNFIELD"
+    requirement = "Run the repair scenario while adding a reviewable generated capability"
+    repositoryPath = "url-shortener"
+  } | ConvertTo-Json)
+
+$repair | Select-Object status, validationAttempts, repaired
+```
+
+Expected: `AWAITING_APPROVAL`, `2`, and `True`. Evidence is stored under
+`agent-workspaces/<workflow-id>/revision-1/logs` and `artifacts`.
 
 An ambiguous workflow returns `AWAITING_CLARIFICATION`. Resume it with:
 

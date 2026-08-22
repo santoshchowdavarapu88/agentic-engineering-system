@@ -54,6 +54,7 @@ agentic:
   execution:
     max-attempts: ${AGENT_MAX_ATTEMPTS:2}
     command-timeout: ${AGENT_COMMAND_TIMEOUT:PT120S}
+    max-output-characters: ${AGENT_COMMAND_MAX_OUTPUT_CHARACTERS:200000}
   model:
     provider: ${MODEL_PROVIDER:deterministic}
     base-url: ${MODEL_BASE_URL:https://api.openai.com}

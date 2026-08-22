@@ -31,9 +31,9 @@ public class DynamicWorkflowPlanner {
         WorkflowTask patch = task("Apply controlled source and test patch", TaskType.PATCH_APPLICATION,
                 Set.of(tests.getId()), GateDefinition.dependenciesSucceeded(),
                 GateDefinition.contextKeys(WorkflowContextKeys.APPLIED_PATCH));
-        WorkflowTask validation = task("Prepare executable validation", TaskType.VALIDATION,
+        WorkflowTask validation = task("Execute validation and bounded repair", TaskType.VALIDATION,
                 Set.of(patch.getId()), GateDefinition.dependenciesSucceeded(),
-                GateDefinition.contextKeys(WorkflowContextKeys.VALIDATION_READY));
+                GateDefinition.contextKeys(WorkflowContextKeys.VALIDATION_READY), 1);
         WorkflowTask documentation = task("Generate documentation proposal", TaskType.DOCUMENTATION,
                 Set.of(implementation.getId()), GateDefinition.dependenciesSucceeded(),
                 GateDefinition.contextKeys(WorkflowContextKeys.DOCUMENTATION));
@@ -54,7 +54,12 @@ public class DynamicWorkflowPlanner {
 
     private WorkflowTask task(String name, TaskType type, Set<UUID> dependencies,
                               GateDefinition entry, GateDefinition exit) {
+        return task(name, type, dependencies, entry, exit, 2);
+    }
+
+    private WorkflowTask task(String name, TaskType type, Set<UUID> dependencies,
+                              GateDefinition entry, GateDefinition exit, int maxAttempts) {
         return new WorkflowTask(UUID.randomUUID(), name, type, dependencies,
-                entry, exit, 2);
+                entry, exit, maxAttempts);
     }
 }

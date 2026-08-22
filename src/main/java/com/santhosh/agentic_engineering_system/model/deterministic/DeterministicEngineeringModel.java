@@ -90,6 +90,9 @@ public class DeterministicEngineeringModel implements EngineeringModel {
             EngineeringPlan plan,
             RepositoryContext repository
     ) {
+        String generatedStatus = repository.requirement()
+                .toLowerCase(Locale.ROOT).contains("repair scenario")
+                ? "BROKEN_AGENT_OUTPUT" : "implemented";
         return new PatchProposal(
                 "Generate a bounded implementation marker for the requested change",
                 List.of(new ProposedFileChange(
@@ -101,9 +104,9 @@ public class DeterministicEngineeringModel implements EngineeringModel {
 
                         public final class AgentGeneratedChange {
                             private AgentGeneratedChange() {}
-                            public static String status() { return "implemented"; }
+                            public static String status() { return "%s"; }
                         }
-                        """,
+                        """.formatted(generatedStatus),
                         "Provides deterministic source output for offline orchestration tests"
                 )),
                 List.of("The scenario fixture permits the generated package"),

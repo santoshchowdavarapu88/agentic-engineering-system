@@ -24,6 +24,10 @@ agentic:
   patch:
     max-files: 20
     max-bytes: 100000
+  execution:
+    max-attempts: 2
+    command-timeout: PT10S
+    max-output-characters: 20000
   model:
     provider: deterministic
     base-url: http://localhost
