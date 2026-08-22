@@ -122,6 +122,29 @@ class DeterministicEngineeringModelTest {
                 .doesNotContain("BROKEN_AGENT_OUTPUT");
     }
 
+    @Test
+    void generatesCompleteGreenfieldProjectAndBrownfieldAnalytics() {
+        RepositoryContext greenfield = new RepositoryContext(
+                "Greenfield: create a Java 21 URL shortener",
+                repository().repositoryMap(), Map.of("README.md", "empty"), 5);
+        PatchProposal greenfieldSource = model.generateImplementation(
+                model.createPlan(greenfield), greenfield);
+        assertThat(greenfieldSource.changes()).extracting("path")
+                .contains("pom.xml",
+                        "src/main/java/generated/urlshortener/UrlShortener.java");
+
+        RepositoryContext analytics = repository();
+        PatchProposal analyticsSource = model.generateImplementation(
+                model.createPlan(analytics), analytics);
+        PatchProposal analyticsTests = model.generateTests(
+                model.createPlan(analytics), analyticsSource, analytics);
+        assertThat(analyticsSource.changes()).extracting("path")
+                .anyMatch(path -> path.toString().endsWith("RedirectAnalyticsController.java"))
+                .anyMatch(path -> path.toString().endsWith("RedirectAnalyticsInterceptor.java"));
+        assertThat(analyticsTests.changes().getFirst().content())
+                .contains("dailyUtcRedirects", "totalRedirects");
+    }
+
     private RepositoryContext repository() {
         return new RepositoryContext(
                 "Add total redirect analytics",

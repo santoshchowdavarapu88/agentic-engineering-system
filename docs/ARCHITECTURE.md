@@ -84,6 +84,19 @@ returns the final changed-file list, SHA-based diff evidence, attempt count and
 whether repair occurred. Exhausted attempts fail the workflow and block release
 readiness.
 
+## Scenario strategy
+
+- Greenfield starts from a README-only repository and generates its Maven build,
+  URL-shortener production code and tests.
+- Brownfield inspects an existing Spring Boot URL shortener and generates
+  redirect analytics components in the repository's package conventions.
+- Ambiguous stops after requirement analysis, accepts human clarification and
+  only then expands and executes the downstream graph.
+
+Durable audit events feed Micrometer counters and timers for workflow outcomes,
+task retries, repairs, rollbacks, total latency and repair recovery time. The
+Prometheus endpoint exposes these as `agentic_*` series.
+
 ## Current limitations
 
 - Active workflow state is in memory and cannot yet resume after an application

@@ -6,6 +6,8 @@ is the primary product.
 
 See [Architecture](docs/ARCHITECTURE.md) for the control loop, agent/model
 boundary, trust boundaries, validation evidence and current limitations.
+See the [Reviewer Guide](docs/REVIEWER-GUIDE.md) for reproducible greenfield,
+brownfield and ambiguous end-to-end demonstrations.
 
 ## Current capabilities
 
@@ -56,6 +58,9 @@ boundary, trust boundaries, validation evidence and current limitations.
 - Explicit repository, patch, command, credential, retry and approval policies
 - Actor-and-reason release approvals and safe-stop governance API
 - Audit-event and policy inspection APIs
+- Executable greenfield, brownfield analytics and ambiguous scenarios
+- Scenario catalog API with expected evidence
+- Prometheus workflow outcome/latency, task/retry, repair, rollback and recovery metrics
 
 The agents now run as one stateful engineering workflow and safely apply their
 structured source/test proposals inside an isolated revision. Generated changes

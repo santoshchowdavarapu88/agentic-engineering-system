@@ -12,16 +12,20 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import com.santhosh.agentic_engineering_system.observability.WorkflowTelemetry;
 
 @Component
 public class JpaDecisionLedger implements DecisionLedger {
     private static final int MAX_DETAIL_CHARACTERS = 2000;
     private final AuditEventJpaRepository repository;
     private final Clock clock;
+    private final WorkflowTelemetry telemetry;
 
-    public JpaDecisionLedger(AuditEventJpaRepository repository, Clock clock) {
+    public JpaDecisionLedger(AuditEventJpaRepository repository, Clock clock,
+                             WorkflowTelemetry telemetry) {
         this.repository = repository;
         this.clock = clock;
+        this.telemetry = telemetry;
     }
 
     @Override
@@ -35,6 +39,7 @@ public class JpaDecisionLedger implements DecisionLedger {
         AuditEventEntity saved = repository.save(new AuditEventEntity(
                 workflowId, taskId, type, boundedDetail,
                 correlationId, Instant.now(clock)));
+        telemetry.record(workflowId, type, saved.getOccurredAt());
         return map(saved);
     }
 
