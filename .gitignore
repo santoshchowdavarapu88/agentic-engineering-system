@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment and runtime output ###
+.env
+.env.*
+!.env.example
+agent-workspaces/
+scenario-repositories/**/target/
+*.log
