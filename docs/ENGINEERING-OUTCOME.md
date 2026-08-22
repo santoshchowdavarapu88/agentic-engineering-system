@@ -17,7 +17,8 @@ LLM reasoning without granting the model unrestricted filesystem or commands.
 5. Validate and atomically apply bounded, optimistic-locking file changes.
 6. Run a fixed Maven capability and retain complete validation evidence.
 7. Restore, diagnose, repair and revalidate within a bounded retry policy.
-8. Stop at human approval and retain durable decision lineage.
+8. Authenticate distinct operator/approver roles, stop at human approval and
+   retain durable decision lineage and workflow checkpoints.
 
 ## Outputs and evidence
 
@@ -55,13 +56,15 @@ Exact API steps and expected evidence are in `REVIEWER-GUIDE.md`.
 | Partial application | Immutable baseline and verified rollback |
 | Arbitrary execution | Fixed Maven capability, timeout and stripped credentials |
 | Broken generated code | Executable tests, logs and evidence-driven repair |
+| Unauthorized governance action | Stateless authentication and distinct operator/approver roles |
+| Spoofed approval identity | Actor derived from the authenticated principal |
 | Infinite autonomy | Attempt limits, safe stop and approval gates |
 | Secret disclosure | Environment credentials and model-command isolation |
 
 ## Known limitations
 
-- Active workflow state is in memory. Audit history is durable, but interrupted
-  execution does not automatically resume after application restart.
+- Active workflow execution is in memory. Audit history and state checkpoints
+  are durable, but interrupted execution does not automatically resume.
 - Validation currently supports Maven, not multiple ecosystems or hardened
   remote execution sandboxes.
 - Deterministic mode demonstrates bounded scenarios; general repository changes

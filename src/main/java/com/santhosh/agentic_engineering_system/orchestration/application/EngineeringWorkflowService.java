@@ -12,6 +12,7 @@ import com.santhosh.agentic_engineering_system.orchestration.domain.WorkflowTask
 import com.santhosh.agentic_engineering_system.orchestration.port.DecisionLedger;
 import com.santhosh.agentic_engineering_system.orchestration.port.WorkflowRepository;
 import com.santhosh.agentic_engineering_system.workspace.WorkspaceService;
+import com.santhosh.agentic_engineering_system.orchestration.snapshot.WorkflowSnapshotStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ public class EngineeringWorkflowService {
     private final RequirementAgent requirementAgent;
     private final DynamicWorkflowPlanner planner;
     private final Clock clock;
+    private final WorkflowSnapshotStore snapshots;
 
     public EngineeringWorkflow submit(ScenarioType scenario, String requirement,
                                       String repositoryPath) {
@@ -53,7 +55,7 @@ public class EngineeringWorkflowService {
             ledger.append(id, null, DecisionType.CLARIFICATION_REQUIRED,
                     "Requirement agent requested measurable acceptance criteria");
         }
-        return repository.save(workflow);
+        return saveAndCheckpoint(workflow);
     }
 
     public EngineeringWorkflow clarify(UUID id, String clarification) {
@@ -80,14 +82,14 @@ public class EngineeringWorkflowService {
         ledger.append(id, null, DecisionType.PLAN_GENERATED,
                 "Dynamic dependency graph generated after clarification");
         engine.resumeAfterClarification(workflow);
-        return repository.save(workflow);
+        return saveAndCheckpoint(workflow);
     }
 
     public EngineeringWorkflow approve(UUID id, UUID taskId, String actor,
                                        String reason) {
         var workflow = require(id);
         engine.approve(workflow, taskId, actor, reason);
-        return repository.save(workflow);
+        return saveAndCheckpoint(workflow);
     }
 
     public EngineeringWorkflow safeStop(UUID id, String actor, String reason) {
@@ -96,7 +98,7 @@ public class EngineeringWorkflowService {
         }
         var workflow = require(id);
         engine.safeStop(workflow, "Stopped by " + actor.trim() + ": " + reason.trim());
-        return repository.save(workflow);
+        return saveAndCheckpoint(workflow);
     }
 
     public List<com.santhosh.agentic_engineering_system.orchestration.domain.DecisionRecord>
@@ -109,5 +111,11 @@ public class EngineeringWorkflowService {
     private EngineeringWorkflow require(UUID id) {
         return repository.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("Workflow does not exist"));
+    }
+
+    private EngineeringWorkflow saveAndCheckpoint(EngineeringWorkflow workflow) {
+        EngineeringWorkflow saved = repository.save(workflow);
+        snapshots.checkpoint(saved);
+        return saved;
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/engineering-workflows")
@@ -39,8 +40,9 @@ public class EngineeringWorkflowController {
 
     @PostMapping("/{workflowId}/tasks/{taskId}/approval")
     public WorkflowResponse approve(@PathVariable UUID workflowId, @PathVariable UUID taskId,
-                                    @Valid @RequestBody ApproveWorkflowRequest request) {
+                                    @Valid @RequestBody ApproveWorkflowRequest request,
+                                    Principal principal) {
         return WorkflowResponse.from(service.approve(workflowId, taskId,
-                request.actor(), request.reason()));
+                principal.getName(), request.reason()));
     }
 }

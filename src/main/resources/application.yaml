@@ -39,6 +39,11 @@ management:
       application: ${spring.application.name}
 
 agentic:
+  security:
+    operator-username: ${AGENT_OPERATOR_USERNAME:operator}
+    operator-password: ${AGENT_OPERATOR_PASSWORD:}
+    approver-username: ${AGENT_APPROVER_USERNAME:approver}
+    approver-password: ${AGENT_APPROVER_PASSWORD:}
   workspace:
     root: ${AGENT_WORKSPACE_ROOT:./agent-workspaces}
     max-files: ${AGENT_WORKSPACE_MAX_FILES:5000}

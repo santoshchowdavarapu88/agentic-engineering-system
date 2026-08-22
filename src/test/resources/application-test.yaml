@@ -12,6 +12,11 @@ spring:
     enabled: false
 
 agentic:
+  security:
+    operator-username: operator
+    operator-password: operator-test-password
+    approver-username: approver
+    approver-password: approver-test-password
   workspace:
     root: ${java.io.tmpdir}/agentic-engineering-tests
     max-files: 1000

@@ -73,8 +73,12 @@ moving control-policy decisions into the model.
 - Failed repair attempts restore the immutable baseline before applying the
   complete corrected proposal.
 - Human approval is required only after executable evidence exists.
-- Every approval and safe stop requires an identified actor and reason.
+- HTTP Basic authentication separates operator and approver roles. The security
+  principal, not a caller-supplied actor field, identifies approvals and stops.
+- Every approval and safe stop requires an authenticated actor and reason.
 - Audit events are append-only PostgreSQL records with correlation IDs.
+- PostgreSQL also stores status, context-revision/key and task-state checkpoints
+  for restart-time investigation and future recovery orchestration.
 
 ## Validation and repair evidence
 
@@ -100,7 +104,7 @@ Prometheus endpoint exposes these as `agentic_*` series.
 ## Current limitations
 
 - Active workflow state is in memory and cannot yet resume after an application
-  restart. Audit and governance lineage is durable in PostgreSQL.
+  restart. Audit lineage and workflow checkpoints are durable in PostgreSQL.
 - The deterministic provider intentionally produces a bounded generated change;
   richer URL-analytics output is added by the scenario harness.
 - Maven is the only executable build capability currently exposed.

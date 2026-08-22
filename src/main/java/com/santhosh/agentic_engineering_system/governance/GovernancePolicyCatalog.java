@@ -6,6 +6,8 @@ import java.util.List;
 
 @Component
 public class GovernancePolicyCatalog {
+    // This registry documents controls and their enforcement owners; enforcement
+    // occurs at the named repository, patch, command, retry and workflow boundaries.
     public List<PolicyDescriptor> policies() {
         return List.of(
                 new PolicyDescriptor("REPOSITORY_BOUNDARY",

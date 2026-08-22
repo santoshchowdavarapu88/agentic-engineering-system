@@ -21,7 +21,7 @@ plan, rationale, artifacts, evidence, risks, assumptions and limitations.
 - Bounded task attempts
 - Human release-approval gate
 - Safe-stop workflow state
-- Append-only in-memory decision lineage
+- Append-only durable decision lineage
 - Pluggable task-handler boundary for later logical agents
 - Approved repository-root enforcement and traversal protection
 - Revision-isolated workspaces with immutable baseline snapshots
@@ -58,7 +58,8 @@ plan, rationale, artifacts, evidence, risks, assumptions and limitations.
 - PostgreSQL-backed append-only workflow audit events
 - Correlation IDs propagated through parallel task execution
 - Explicit repository, patch, command, credential, retry and approval policies
-- Actor-and-reason release approvals and safe-stop governance API
+- Authenticated role-separated release approvals and safe-stop governance API
+- Durable workflow status, context and task-state checkpoints
 - Audit-event and policy inspection APIs
 - Executable greenfield, brownfield analytics and ambiguous scenarios
 - Scenario catalog API with expected evidence
@@ -91,6 +92,25 @@ $env:MODEL_NAME = "gpt-4.1-mini"
 API keys must remain in environment variables and must never be committed. The
 OpenAI boundary is tested against a local mock HTTP server, so normal tests and
 CI require neither network access nor paid credentials.
+
+## API security
+
+All workflow and metrics APIs require HTTP Basic authentication. Operators can
+create, clarify and safe-stop workflows; approvers alone can release an approved
+task. The authenticated principal, rather than a request-body actor claim, is
+written to the decision ledger.
+
+Set distinct credentials before starting the service:
+
+```powershell
+$env:AGENT_OPERATOR_USERNAME = "operator"
+$env:AGENT_OPERATOR_PASSWORD = Read-Host "Operator password"
+$env:AGENT_APPROVER_USERNAME = "approver"
+$env:AGENT_APPROVER_PASSWORD = Read-Host "Approver password"
+```
+
+The readiness endpoint remains public for container orchestration. Do not use
+the example credentials outside local development.
 
 ## Orchestration shape
 
@@ -160,9 +180,15 @@ The repository path must be relative to `AGENT_REPOSITORY_ROOT`, which defaults
 to `./scenario-repositories`.
 
 ```powershell
+$operatorToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("operator:local-operator-password"))
+$approverToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("approver:local-approver-password"))
+$operatorHeaders = @{ Authorization = "Basic $operatorToken" }
+$approverHeaders = @{ Authorization = "Basic $approverToken" }
+
 $workflow = Invoke-RestMethod `
   -Method Post `
   -Uri "http://localhost:8080/api/v1/engineering-workflows" `
+  -Headers $operatorHeaders `
   -ContentType "application/json" `
   -Body (@{
     scenarioType = "BROWNFIELD"
@@ -186,6 +212,7 @@ failure to repair and revalidate the patch:
 $repair = Invoke-RestMethod `
   -Method Post `
   -Uri "http://localhost:8080/api/v1/engineering-workflows" `
+  -Headers $operatorHeaders `
   -ContentType "application/json" `
   -Body (@{
     scenarioType = "BROWNFIELD"
@@ -205,6 +232,7 @@ An ambiguous workflow returns `AWAITING_CLARIFICATION`. Resume it with:
 $workflow = Invoke-RestMethod `
   -Method Post `
   -Uri "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/clarification" `
+  -Headers $operatorHeaders `
   -ContentType "application/json" `
   -Body (@{
     clarification = "Track total redirects per short code and daily UTC counts; expose both through a read-only API."
@@ -222,19 +250,22 @@ $releaseTask = $workflow.tasks |
 $workflow = Invoke-RestMethod `
   -Method Post `
   -Uri "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/tasks/$($releaseTask.id)/approval" `
+  -Headers $approverHeaders `
   -ContentType "application/json" `
-  -Body '{"actor":"reviewer@example.com","reason":"Validated diff and evidence reviewed"}'
+  -Body '{"reason":"Validated diff and evidence reviewed"}'
 ```
 
 Inspect durable governance evidence:
 
 ```powershell
 Invoke-RestMethod `
-  "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/audit-events" |
+  "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/audit-events" `
+  -Headers $operatorHeaders |
   Format-Table sequence, type, taskId, correlationId, occurredAt
 
 Invoke-RestMethod `
-  "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/policies" |
+  "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/policies" `
+  -Headers $operatorHeaders |
   Format-Table id, control, enforcement
 ```
 
@@ -244,13 +275,15 @@ Safely stop a non-terminal workflow:
 Invoke-RestMethod `
   -Method Post `
   -Uri "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/safe-stop" `
+  -Headers $operatorHeaders `
   -ContentType "application/json" `
-  -Body '{"actor":"reviewer@example.com","reason":"Risk requires investigation"}'
+  -Body '{"reason":"Risk requires investigation"}'
 ```
 
 Audit events survive application restarts. Active workflow execution state is
-currently in memory and is intentionally documented as a limitation rather
-than represented as restart-recoverable.
+currently in memory, while a durable checkpoint of status, context revision and
+task states is retained for investigation. Automatic restart-resume remains an
+explicit limitation and is not falsely represented as implemented.
 
 ## Delivery roadmap
 

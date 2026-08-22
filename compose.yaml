@@ -7,6 +7,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -23,6 +25,10 @@ services:
       MODEL_PROVIDER: ${MODEL_PROVIDER:-deterministic}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
       MODEL_NAME: ${MODEL_NAME:-gpt-4.1-mini}
+      AGENT_OPERATOR_USERNAME: ${AGENT_OPERATOR_USERNAME:-operator}
+      AGENT_OPERATOR_PASSWORD: ${AGENT_OPERATOR_PASSWORD:?Set AGENT_OPERATOR_PASSWORD}
+      AGENT_APPROVER_USERNAME: ${AGENT_APPROVER_USERNAME:-approver}
+      AGENT_APPROVER_PASSWORD: ${AGENT_APPROVER_PASSWORD:?Set AGENT_APPROVER_PASSWORD}
       SPRING_DOCKER_COMPOSE_ENABLED: "false"
       AGENT_REPOSITORY_ROOT: /app/scenario-repositories
       AGENT_WORKSPACE_ROOT: /app/agent-workspaces
