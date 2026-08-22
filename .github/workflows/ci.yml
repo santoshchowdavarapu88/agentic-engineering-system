@@ -42,6 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: verify
+    env:
+      AGENT_OPERATOR_PASSWORD: ci-operator-password
+      AGENT_APPROVER_PASSWORD: ci-approver-password
     steps:
       - uses: actions/checkout@v4
       - name: Validate Compose
