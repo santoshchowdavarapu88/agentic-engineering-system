@@ -22,10 +22,39 @@ is the primary product.
 - Controlled file listing, text reading and bounded code search
 - Brownfield component, API, persistence and data-flow mapping
 - Requirement-relevant bounded repository context for later model prompts
+- Provider-neutral structured engineering model contract
+- Specialized requirement, architecture, implementation, testing, repair and
+  documentation agents
+- Deterministic offline provider for repeatable tests and demonstrations
+- Real OpenAI Responses API provider with strict JSON-schema outputs
+- Model request timeout, output bounds and environment-only credentials
 
-Model-backed reasoning, controlled patch/build tools, durable audit
-storage, dynamic replanning and the three executable assessment scenarios are
-delivered in later commits.
+The agents now produce structured reasoning and source/test proposals. They do
+not yet write repository files or execute commands; controlled patch/build
+tools, durable audit storage, dynamic replanning and the three executable
+assessment scenarios are delivered in later commits.
+
+## Model providers
+
+The default provider is deterministic and requires no credential:
+
+```powershell
+$env:MODEL_PROVIDER = "deterministic"
+.\mvnw.cmd spring-boot:run
+```
+
+The same agent contracts can use the real OpenAI Responses API:
+
+```powershell
+$env:MODEL_PROVIDER = "openai"
+$env:MODEL_API_KEY = Read-Host "OpenAI API key"
+$env:MODEL_NAME = "gpt-4.1-mini"
+.\mvnw.cmd spring-boot:run
+```
+
+API keys must remain in environment variables and must never be committed. The
+OpenAI boundary is tested against a local mock HTTP server, so normal tests and
+CI require neither network access nor paid credentials.
 
 ## Orchestration shape
 

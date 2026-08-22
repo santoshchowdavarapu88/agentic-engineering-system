@@ -23,3 +23,9 @@ agentic:
     max-context-characters: 30000
   model:
     provider: deterministic
+    base-url: http://localhost
+    api-key: ""
+    name: test-model
+    timeout: PT5S
+    max-output-characters: 10000
+    max-output-tokens: 1000
