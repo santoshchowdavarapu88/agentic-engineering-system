@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -45,6 +46,17 @@ public class FileHashService {
             return HexFormat.of().formatHex(digest.digest());
         } catch (IOException | NoSuchAlgorithmException exception) {
             throw new WorkspaceException("Unable to hash file " + file, exception);
+        }
+    }
+
+    public String sha256(String content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(
+                    digest.digest(content.getBytes(StandardCharsets.UTF_8))
+            );
+        } catch (NoSuchAlgorithmException exception) {
+            throw new WorkspaceException("SHA-256 is unavailable", exception);
         }
     }
 

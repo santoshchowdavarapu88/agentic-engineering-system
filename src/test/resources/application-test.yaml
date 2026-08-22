@@ -21,6 +21,9 @@ agentic:
     max-read-characters: 50000
     max-search-results: 50
     max-context-characters: 30000
+  patch:
+    max-files: 20
+    max-bytes: 100000
   model:
     provider: deterministic
     base-url: http://localhost

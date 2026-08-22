@@ -28,8 +28,11 @@ public class DynamicWorkflowPlanner {
         WorkflowTask tests = task("Generate test proposal", TaskType.TEST_GENERATION,
                 Set.of(implementation.getId()), GateDefinition.dependenciesSucceeded(),
                 GateDefinition.contextKeys(WorkflowContextKeys.TEST_PATCH));
-        WorkflowTask validation = task("Prepare executable validation", TaskType.VALIDATION,
+        WorkflowTask patch = task("Apply controlled source and test patch", TaskType.PATCH_APPLICATION,
                 Set.of(tests.getId()), GateDefinition.dependenciesSucceeded(),
+                GateDefinition.contextKeys(WorkflowContextKeys.APPLIED_PATCH));
+        WorkflowTask validation = task("Prepare executable validation", TaskType.VALIDATION,
+                Set.of(patch.getId()), GateDefinition.dependenciesSucceeded(),
                 GateDefinition.contextKeys(WorkflowContextKeys.VALIDATION_READY));
         WorkflowTask documentation = task("Generate documentation proposal", TaskType.DOCUMENTATION,
                 Set.of(implementation.getId()), GateDefinition.dependenciesSucceeded(),
@@ -42,6 +45,7 @@ public class DynamicWorkflowPlanner {
         workflow.addTask(architecture);
         workflow.addTask(implementation);
         workflow.addTask(tests);
+        workflow.addTask(patch);
         workflow.addTask(validation);
         workflow.addTask(documentation);
         workflow.addTask(release);

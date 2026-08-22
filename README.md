@@ -35,11 +35,17 @@ is the primary product.
 - Generated implementation, test and documentation proposals retained in
   versioned workflow context
 - Human approval required before release readiness can complete
+- Preflight validation of generated create, update and delete operations
+- Traversal, absolute-path, duplicate-path and unsupported-file rejection
+- SHA-256 optimistic locking for updates and deletes
+- Same-filesystem atomic writes with verified workspace rollback on failure
+- Combined implementation/test patch application inside the isolated revision
+- Changed-file and diff evidence returned by the workflow API
 
-The agents now run as one stateful engineering workflow and produce structured
-reasoning and source/test proposals. They do not yet write repository files or
-execute commands; controlled patch/build tools, durable audit storage and the
-three executable assessment scenarios are delivered in later commits.
+The agents now run as one stateful engineering workflow and safely apply their
+structured source/test proposals inside an isolated revision. They do not yet
+execute build commands; executable validation, failure-driven repair, durable
+audit storage and the three assessment scenarios are delivered later.
 
 ## Model providers
 
@@ -135,6 +141,8 @@ $workflow = Invoke-RestMethod `
 
 $workflow | Select-Object id, status, contextRevision
 $workflow.tasks | Format-Table id, type, status, attempts, approvalRequired
+$workflow.changedFiles
+$workflow.diff
 ```
 
 An ambiguous workflow returns `AWAITING_CLARIFICATION`. Resume it with:

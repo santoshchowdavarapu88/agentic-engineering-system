@@ -26,10 +26,11 @@ class DynamicWorkflowPlannerTest {
         new DynamicWorkflowPlanner().expand(workflow, requirement.getId());
 
         new WorkflowGraphValidator().validate(workflow);
-        assertThat(workflow.getTasks()).hasSize(8);
+        assertThat(workflow.getTasks()).hasSize(9);
         assertThat(workflow.getTasks()).extracting(WorkflowTask::getType)
                 .contains(TaskType.REPOSITORY_ANALYSIS, TaskType.ARCHITECTURE,
                         TaskType.IMPLEMENTATION, TaskType.TEST_GENERATION,
+                        TaskType.PATCH_APPLICATION,
                         TaskType.VALIDATION, TaskType.DOCUMENTATION,
                         TaskType.RELEASE_READINESS);
         assertThat(workflow.getTasks()).filteredOn(task ->

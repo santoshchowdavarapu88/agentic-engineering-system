@@ -10,6 +10,7 @@ public final class WorkflowContextKeys {
     public static final String ENGINEERING_PLAN = "engineeringPlan";
     public static final String IMPLEMENTATION_PATCH = "implementationPatch";
     public static final String TEST_PATCH = "testPatch";
+    public static final String APPLIED_PATCH = "appliedPatch";
     public static final String VALIDATION_READY = "validationReady";
     public static final String DOCUMENTATION = "documentation";
     public static final String RELEASE_READY = "releaseReady";

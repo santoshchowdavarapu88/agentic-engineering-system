@@ -48,6 +48,9 @@ agentic:
     max-read-characters: ${AGENT_MAX_READ_CHARACTERS:200000}
     max-search-results: ${AGENT_MAX_SEARCH_RESULTS:100}
     max-context-characters: ${AGENT_MAX_CONTEXT_CHARACTERS:120000}
+  patch:
+    max-files: ${AGENT_PATCH_MAX_FILES:100}
+    max-bytes: ${AGENT_PATCH_MAX_BYTES:1048576}
   execution:
     max-attempts: ${AGENT_MAX_ATTEMPTS:2}
     command-timeout: ${AGENT_COMMAND_TIMEOUT:PT120S}
