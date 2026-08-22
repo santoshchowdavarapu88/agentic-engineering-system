@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:agentic-engineering;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  flyway:
+    enabled: false
+
+agentic:
+  workspace:
+    root: ${java.io.tmpdir}/agentic-engineering-tests
+  model:
+    provider: deterministic
