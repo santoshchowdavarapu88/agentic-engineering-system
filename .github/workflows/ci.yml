@@ -24,6 +24,8 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
       - name: Test and enforce coverage
         run: ./mvnw --batch-mode --no-transfer-progress clean verify
       - name: Upload test and coverage evidence
