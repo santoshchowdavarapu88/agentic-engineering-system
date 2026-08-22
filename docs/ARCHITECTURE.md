@@ -73,6 +73,8 @@ moving control-policy decisions into the model.
 - Failed repair attempts restore the immutable baseline before applying the
   complete corrected proposal.
 - Human approval is required only after executable evidence exists.
+- Every approval and safe stop requires an identified actor and reason.
+- Audit events are append-only PostgreSQL records with correlation IDs.
 
 ## Validation and repair evidence
 
@@ -84,8 +86,8 @@ readiness.
 
 ## Current limitations
 
-- Workflow and decision storage are in memory; durable audit persistence is a
-  planned governance increment.
+- Active workflow state is in memory and cannot yet resume after an application
+  restart. Audit and governance lineage is durable in PostgreSQL.
 - The deterministic provider intentionally produces a bounded generated change;
   richer URL-analytics output is added by the scenario harness.
 - Maven is the only executable build capability currently exposed.

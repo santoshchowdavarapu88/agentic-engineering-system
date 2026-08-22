@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import com.santhosh.agentic_engineering_system.orchestration.port.DecisionLedger;
 
 class RequirementAnalysisTaskHandlerTest {
     @Test
@@ -37,7 +38,8 @@ class RequirementAnalysisTaskHandlerTest {
         workflow.getContext().put(WorkflowContextKeys.SCENARIO, ScenarioType.AMBIGUOUS);
         workflow.start();
 
-        var result = new RequirementAnalysisTaskHandler(agent, new DynamicWorkflowPlanner())
+        var result = new RequirementAnalysisTaskHandler(agent, new DynamicWorkflowPlanner(),
+                mock(DecisionLedger.class))
                 .execute(workflow, task);
 
         assertThat(workflow.getStatus()).isEqualTo(WorkflowStatus.AWAITING_CLARIFICATION);

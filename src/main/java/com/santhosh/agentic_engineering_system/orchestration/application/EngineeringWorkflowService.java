@@ -36,9 +36,14 @@ public class EngineeringWorkflowService {
                                       String repositoryPath) {
         UUID id = UUID.randomUUID();
         var workflow = new EngineeringWorkflow(id, requirement, clock);
+        ledger.append(id, null, DecisionType.WORKFLOW_CREATED,
+                "Engineering workflow created for " + scenario + " scenario");
         workflow.getContext().put(WorkflowContextKeys.SCENARIO, scenario);
         workflow.getContext().put(WorkflowContextKeys.WORKSPACE,
                 workspaceService.create(id, 1, Path.of(repositoryPath)));
+        ledger.append(id, null, DecisionType.POLICY_EVALUATED,
+                "Allowed relative repository; isolated workspace; bounded patch; " +
+                        "MAVEN_TEST only; human release approval required");
         workflow.addTask(new WorkflowTask(UUID.randomUUID(), "Interpret requirement",
                 TaskType.REQUIREMENT_ANALYSIS, Set.of(), GateDefinition.none(),
                 GateDefinition.contextKeys(WorkflowContextKeys.REQUIREMENT_ANALYSIS), 2));
@@ -47,9 +52,6 @@ public class EngineeringWorkflowService {
         if (workflow.getStatus() == WorkflowStatus.AWAITING_CLARIFICATION) {
             ledger.append(id, null, DecisionType.CLARIFICATION_REQUIRED,
                     "Requirement agent requested measurable acceptance criteria");
-        } else {
-            ledger.append(id, null, DecisionType.PLAN_GENERATED,
-                    "Requirement-driven dependency graph generated");
         }
         return repository.save(workflow);
     }
@@ -81,10 +83,25 @@ public class EngineeringWorkflowService {
         return repository.save(workflow);
     }
 
-    public EngineeringWorkflow approve(UUID id, UUID taskId, String actor) {
+    public EngineeringWorkflow approve(UUID id, UUID taskId, String actor,
+                                       String reason) {
         var workflow = require(id);
-        engine.approve(workflow, taskId, actor);
+        engine.approve(workflow, taskId, actor, reason);
         return repository.save(workflow);
+    }
+
+    public EngineeringWorkflow safeStop(UUID id, String actor, String reason) {
+        if (actor == null || actor.isBlank() || reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Safe-stop actor and reason are required");
+        }
+        var workflow = require(id);
+        engine.safeStop(workflow, "Stopped by " + actor.trim() + ": " + reason.trim());
+        return repository.save(workflow);
+    }
+
+    public List<com.santhosh.agentic_engineering_system.orchestration.domain.DecisionRecord>
+    auditEvents(UUID id) {
+        return ledger.findByWorkflowId(id);
     }
 
     public EngineeringWorkflow find(UUID id) { return require(id); }

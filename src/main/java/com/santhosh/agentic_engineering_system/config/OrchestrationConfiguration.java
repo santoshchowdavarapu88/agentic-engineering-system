@@ -1,7 +1,7 @@
 package com.santhosh.agentic_engineering_system.config;
 
-import com.santhosh.agentic_engineering_system.orchestration.adapter.InMemoryDecisionLedger;
 import com.santhosh.agentic_engineering_system.orchestration.adapter.InMemoryWorkflowRepository;
+import com.santhosh.agentic_engineering_system.audit.MdcPropagatingExecutor;
 import com.santhosh.agentic_engineering_system.orchestration.application.WorkflowEngine;
 import com.santhosh.agentic_engineering_system.orchestration.application.WorkflowGateEvaluator;
 import com.santhosh.agentic_engineering_system.orchestration.application.WorkflowGraphValidator;
@@ -22,8 +22,9 @@ import java.util.concurrent.Executors;
 public class OrchestrationConfiguration {
     @Bean Clock workflowClock() { return Clock.systemUTC(); }
     @Bean WorkflowRepository workflowRepository() { return new InMemoryWorkflowRepository(); }
-    @Bean DecisionLedger decisionLedger(Clock clock) { return new InMemoryDecisionLedger(clock); }
-    @Bean Executor workflowExecutor() { return Executors.newVirtualThreadPerTaskExecutor(); }
+    @Bean Executor workflowExecutor() {
+        return new MdcPropagatingExecutor(Executors.newVirtualThreadPerTaskExecutor());
+    }
     @Bean WorkflowEngine workflowEngine(List<WorkflowTaskHandler> handlers,
                                         DecisionLedger ledger,
                                         @Qualifier("workflowExecutor") Executor workflowExecutor) {

@@ -40,6 +40,7 @@ public class EngineeringWorkflowController {
     @PostMapping("/{workflowId}/tasks/{taskId}/approval")
     public WorkflowResponse approve(@PathVariable UUID workflowId, @PathVariable UUID taskId,
                                     @Valid @RequestBody ApproveWorkflowRequest request) {
-        return WorkflowResponse.from(service.approve(workflowId, taskId, request.actor()));
+        return WorkflowResponse.from(service.approve(workflowId, taskId,
+                request.actor(), request.reason()));
     }
 }

@@ -51,6 +51,11 @@ boundary, trust boundaries, validation evidence and current limitations.
 - Compiler/test evidence passed to the repair agent
 - Baseline restoration, corrected patch application and bounded revalidation
 - Runnable Spring Boot URL-shortener fixture with baseline tests
+- PostgreSQL-backed append-only workflow audit events
+- Correlation IDs propagated through parallel task execution
+- Explicit repository, patch, command, credential, retry and approval policies
+- Actor-and-reason release approvals and safe-stop governance API
+- Audit-event and policy inspection APIs
 
 The agents now run as one stateful engineering workflow and safely apply their
 structured source/test proposals inside an isolated revision. Generated changes
@@ -211,8 +216,34 @@ $workflow = Invoke-RestMethod `
   -Method Post `
   -Uri "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/tasks/$($releaseTask.id)/approval" `
   -ContentType "application/json" `
-  -Body '{"actor":"reviewer@example.com"}'
+  -Body '{"actor":"reviewer@example.com","reason":"Validated diff and evidence reviewed"}'
 ```
+
+Inspect durable governance evidence:
+
+```powershell
+Invoke-RestMethod `
+  "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/audit-events" |
+  Format-Table sequence, type, taskId, correlationId, occurredAt
+
+Invoke-RestMethod `
+  "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/policies" |
+  Format-Table id, control, enforcement
+```
+
+Safely stop a non-terminal workflow:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/governance/safe-stop" `
+  -ContentType "application/json" `
+  -Body '{"actor":"reviewer@example.com","reason":"Risk requires investigation"}'
+```
+
+Audit events survive application restarts. Active workflow execution state is
+currently in memory and is intentionally documented as a limitation rather
+than represented as restart-recoverable.
 
 ## Delivery roadmap
 

@@ -10,6 +10,8 @@ import com.santhosh.agentic_engineering_system.orchestration.port.WorkflowTaskHa
 import com.santhosh.agentic_engineering_system.patch.ControlledPatchApplier;
 import com.santhosh.agentic_engineering_system.patch.PatchProposalMerger;
 import com.santhosh.agentic_engineering_system.workspace.EngineeringWorkspace;
+import com.santhosh.agentic_engineering_system.orchestration.port.DecisionLedger;
+import com.santhosh.agentic_engineering_system.orchestration.domain.DecisionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class PatchApplicationTaskHandler implements WorkflowTaskHandler {
     private final PatchProposalMerger merger;
     private final ControlledPatchApplier applier;
+    private final DecisionLedger ledger;
 
     @Override public TaskType supports() { return TaskType.PATCH_APPLICATION; }
 
@@ -29,7 +32,10 @@ public class PatchApplicationTaskHandler implements WorkflowTaskHandler {
                 WorkflowContextKeys.TEST_PATCH, PatchProposal.class).orElseThrow();
         var workspace = workflow.getContext().find(
                 WorkflowContextKeys.WORKSPACE, EngineeringWorkspace.class).orElseThrow();
-        return TaskExecutionResult.of(WorkflowContextKeys.APPLIED_PATCH,
-                applier.apply(workspace, merger.merge(implementation, tests)));
+        var applied = applier.apply(workspace, merger.merge(implementation, tests));
+        ledger.append(workflow.getId(), task.getId(), DecisionType.PATCH_APPLIED,
+                "Applied " + applied.changes().size() +
+                        " policy-validated file changes in the isolated workspace");
+        return TaskExecutionResult.of(WorkflowContextKeys.APPLIED_PATCH, applied);
     }
 }

@@ -14,6 +14,7 @@ import com.santhosh.agentic_engineering_system.validation.EngineeringValidationS
 import com.santhosh.agentic_engineering_system.validation.ValidationArtifactWriter;
 import com.santhosh.agentic_engineering_system.workspace.EngineeringWorkspace;
 import com.santhosh.agentic_engineering_system.workspace.WorkspaceService;
+import com.santhosh.agentic_engineering_system.orchestration.port.DecisionLedger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -52,7 +53,8 @@ class EngineeringValidationServiceTest {
         when(applier.apply(workspace, repairedProposal)).thenReturn(repairedPatch);
         var service = new EngineeringValidationService(runner, repairAgent, applier,
                 workspaceService, new ValidationArtifactWriter(),
-                new AgentExecutionProperties(2, Duration.ofSeconds(5), 10_000));
+                new AgentExecutionProperties(2, Duration.ofSeconds(5), 10_000),
+                mock(DecisionLedger.class));
 
         var outcome = service.validate(workspace, mock(EngineeringPlan.class),
                 mock(RepositoryContext.class), initialProposal, initialPatch);

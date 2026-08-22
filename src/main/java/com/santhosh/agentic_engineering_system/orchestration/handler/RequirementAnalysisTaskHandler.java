@@ -12,12 +12,15 @@ import com.santhosh.agentic_engineering_system.orchestration.domain.WorkflowTask
 import com.santhosh.agentic_engineering_system.orchestration.port.WorkflowTaskHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.santhosh.agentic_engineering_system.orchestration.port.DecisionLedger;
+import com.santhosh.agentic_engineering_system.orchestration.domain.DecisionType;
 
 @Component
 @RequiredArgsConstructor
 public class RequirementAnalysisTaskHandler implements WorkflowTaskHandler {
     private final RequirementAgent agent;
     private final DynamicWorkflowPlanner planner;
+    private final DecisionLedger ledger;
 
     @Override public TaskType supports() { return TaskType.REQUIREMENT_ANALYSIS; }
 
@@ -31,6 +34,8 @@ public class RequirementAnalysisTaskHandler implements WorkflowTaskHandler {
             workflow.awaitClarification();
         } else {
             planner.expand(workflow, task.getId());
+            ledger.append(workflow.getId(), task.getId(), DecisionType.PLAN_GENERATED,
+                    "Requirement-driven dependency graph generated");
         }
         return TaskExecutionResult.of(WorkflowContextKeys.REQUIREMENT_ANALYSIS, analysis);
     }

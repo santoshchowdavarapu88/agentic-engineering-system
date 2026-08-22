@@ -10,6 +10,7 @@ public record DecisionRecord(
         UUID taskId,
         DecisionType type,
         String detail,
+        String correlationId,
         Instant occurredAt
 ) {
     public DecisionRecord {
@@ -19,6 +20,7 @@ public record DecisionRecord(
         workflowId = Objects.requireNonNull(workflowId);
         type = Objects.requireNonNull(type);
         detail = Objects.requireNonNull(detail);
+        correlationId = Objects.requireNonNullElse(correlationId, "SYSTEM");
         occurredAt = Objects.requireNonNull(occurredAt);
     }
 }

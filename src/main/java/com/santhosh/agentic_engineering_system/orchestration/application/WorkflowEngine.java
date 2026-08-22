@@ -122,8 +122,20 @@ public final class WorkflowEngine {
             UUID taskId,
             String actor
     ) {
+        approve(workflow, taskId, actor, "Approved by reviewer");
+    }
+
+    public void approve(
+            EngineeringWorkflow workflow,
+            UUID taskId,
+            String actor,
+            String reason
+    ) {
         if (actor == null || actor.isBlank()) {
             throw new IllegalArgumentException("Approval actor is required");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Approval reason is required");
         }
         WorkflowTask task = workflow.findTask(taskId)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -139,7 +151,7 @@ public final class WorkflowEngine {
                 true
         );
         record(workflow, taskId, DecisionType.APPROVAL_GRANTED,
-                "Approval granted by " + actor.trim());
+                "Approval granted by " + actor.trim() + ": " + reason.trim());
         workflow.resumeAfterApproval();
         execute(workflow);
     }

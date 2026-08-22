@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.MDC;
 
 public final class InMemoryDecisionLedger implements DecisionLedger {
 
@@ -35,6 +36,7 @@ public final class InMemoryDecisionLedger implements DecisionLedger {
                 taskId,
                 type,
                 detail,
+                MDC.get("correlationId"),
                 Instant.now(clock)
         );
         records.add(record);

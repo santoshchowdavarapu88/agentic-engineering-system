@@ -13,6 +13,8 @@ import com.santhosh.agentic_engineering_system.patch.ControlledPatchApplier;
 import com.santhosh.agentic_engineering_system.repository.analysis.RepositoryContext;
 import com.santhosh.agentic_engineering_system.workspace.EngineeringWorkspace;
 import com.santhosh.agentic_engineering_system.workspace.WorkspaceService;
+import com.santhosh.agentic_engineering_system.orchestration.port.DecisionLedger;
+import com.santhosh.agentic_engineering_system.orchestration.domain.DecisionType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ public class EngineeringValidationService {
     private final WorkspaceService workspaceService;
     private final ValidationArtifactWriter artifactWriter;
     private final AgentExecutionProperties properties;
+    private final DecisionLedger ledger;
 
     public ValidationOutcome validate(EngineeringWorkspace workspace,
                                       EngineeringPlan plan,
@@ -39,21 +42,32 @@ public class EngineeringValidationService {
         AppliedPatch currentPatch = initialPatch;
         boolean repaired = false;
         for (int attempt = 1; attempt <= properties.maxAttempts(); attempt++) {
+            ledger.append(workspace.workflowId(), null, DecisionType.VALIDATION_STARTED,
+                    "MAVEN_TEST validation attempt " + attempt + " started");
             CommandExecutionResult result;
             try {
                 result = commandRunner.run(
                         workspace.repository(), BuildCapability.MAVEN_TEST);
             } catch (RuntimeException exception) {
                 workspaceService.rollback(workspace);
+                ledger.append(workspace.workflowId(), null, DecisionType.ROLLBACK_PERFORMED,
+                        "Command execution error; baseline restored");
                 throw exception;
             }
             attempts.add(result);
             artifactWriter.writeAttempt(workspace, attempt, result);
             if (result.succeeded()) {
+                ledger.append(workspace.workflowId(), null,
+                        DecisionType.VALIDATION_SUCCEEDED,
+                        "MAVEN_TEST succeeded on attempt " + attempt);
                 return new ValidationOutcome(true, repaired, attempts, currentPatch);
             }
+            ledger.append(workspace.workflowId(), null, DecisionType.VALIDATION_FAILED,
+                    "MAVEN_TEST failed on attempt " + attempt + ": " + summary(result));
             if (attempt == properties.maxAttempts()) {
                 workspaceService.rollback(workspace);
+                ledger.append(workspace.workflowId(), null, DecisionType.ROLLBACK_PERFORMED,
+                        "Validation attempts exhausted; baseline restored");
                 throw new ValidationExhaustedException(
                         "Maven validation failed after " + attempt + " attempts: " +
                                 summary(result));
@@ -61,14 +75,20 @@ public class EngineeringValidationService {
             ValidationFailure failure = new ValidationFailure(
                     "maven clean test", result.exitCode(), summary(result), result.output());
             PatchProposal repairedProposal;
+            ledger.append(workspace.workflowId(), null, DecisionType.REPAIR_REQUESTED,
+                    "Repair agent invoked using validation attempt " + attempt + " evidence");
             try {
                 repairedProposal = repairAgent.repair(
                         plan, currentProposal, failure, repository);
             } catch (RuntimeException exception) {
                 workspaceService.rollback(workspace);
+                ledger.append(workspace.workflowId(), null, DecisionType.ROLLBACK_PERFORMED,
+                        "Repair generation error; baseline restored");
                 throw exception;
             }
             workspaceService.rollback(workspace);
+            ledger.append(workspace.workflowId(), null, DecisionType.ROLLBACK_PERFORMED,
+                    "Baseline restored before corrected patch application");
             currentPatch = patchApplier.apply(workspace, repairedProposal);
             currentProposal = repairedProposal;
             repaired = true;
