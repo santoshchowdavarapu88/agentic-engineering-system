@@ -1,21 +1,46 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: agentic-engineering-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-agentic_engineering}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - agentic-engineering-postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 10
     restart: unless-stopped
 
+  app:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-agentic_engineering}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-deterministic}
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+      MODEL_NAME: ${MODEL_NAME:-gpt-4.1-mini}
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      AGENT_REPOSITORY_ROOT: /app/scenario-repositories
+      AGENT_WORKSPACE_ROOT: /app/agent-workspaces
+    ports: ["8080:8080"]
+    volumes:
+      - ./scenario-repositories:/app/scenario-repositories:ro
+      - agent-workspaces:/app/agent-workspaces
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health/readiness | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
 volumes:
-  agentic-engineering-postgres-data:
+  postgres-data:
+  agent-workspaces:

@@ -1,0 +1,9 @@
+.git
+.github
+.idea
+.env
+agent-workspaces
+target
+scenario-repositories/**/target
+*.iml
+*.log

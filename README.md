@@ -8,6 +8,8 @@ See [Architecture](docs/ARCHITECTURE.md) for the control loop, agent/model
 boundary, trust boundaries, validation evidence and current limitations.
 See the [Reviewer Guide](docs/REVIEWER-GUIDE.md) for reproducible greenfield,
 brownfield and ambiguous end-to-end demonstrations.
+See the [Engineering Outcome](docs/ENGINEERING-OUTCOME.md) for the consolidated
+plan, rationale, artifacts, evidence, risks, assumptions and limitations.
 
 ## Current capabilities
 
@@ -65,8 +67,8 @@ brownfield and ambiguous end-to-end demonstrations.
 The agents now run as one stateful engineering workflow and safely apply their
 structured source/test proposals inside an isolated revision. Generated changes
 are compiled and tested; failures alter the next action by invoking repair and
-revalidation. Durable audit storage and the complete three-scenario reviewer
-harness are delivered later.
+revalidation. Durable audit storage, metrics and all three assessment scenarios
+are included in this repository.
 
 ## Model providers
 
@@ -137,7 +139,7 @@ the configured task bound; exhausted tasks fail the workflow.
 docker compose config
 docker compose up -d postgres
 docker compose ps
-.\mvnw.cmd clean test
+.\mvnw.cmd clean verify
 ```
 
 Start the service:
@@ -262,3 +264,11 @@ than represented as restart-recoverable.
 8. Governance, policy gates and durable audit evidence
 9. Greenfield, brownfield and ambiguous scenario harness
 10. CI, containers, metrics and consolidated engineering outcome
+
+## Production delivery
+
+`Dockerfile` creates a non-root Java 21 runtime image. `compose.yaml` starts the
+application with PostgreSQL and health checks. GitHub Actions runs Maven verify,
+enforces line coverage, uploads test/coverage evidence and verifies the image.
+
+The JaCoCo HTML report is generated at `target/site/jacoco/index.html`.

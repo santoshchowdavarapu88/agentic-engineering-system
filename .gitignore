@@ -39,3 +39,5 @@ build/
 agent-workspaces/
 scenario-repositories/**/target/
 *.log
+.DS_Store
+coverage/
