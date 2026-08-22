@@ -78,3 +78,11 @@ Exact API steps and expected evidence are in `REVIEWER-GUIDE.md`.
 `mvn clean verify` runs tests, creates a JaCoCo report and enforces line coverage.
 GitHub Actions repeats verification and builds the non-root container. Compose
 provides the application, PostgreSQL, health checks and persistent storage.
+
+## Provider evidence
+
+Deterministic mode is a repeatable test double and bounded demonstration fixture;
+it proves orchestration and safety behavior, not open-ended reasoning. OpenAI mode
+is the general agentic path for requirement interpretation, repository-grounded
+planning, code/test generation and repair. Its API boundary is tested with a
+local mock server, so CI requires neither credentials nor paid calls.

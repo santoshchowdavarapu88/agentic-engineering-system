@@ -208,6 +208,58 @@ class WorkflowEngineTest {
         assertThat(workflow.getStatus()).isEqualTo(WorkflowStatus.FAILED);
     }
 
+    @Test
+    void blocksDownstreamWhenUpstreamExhaustsRetries() {
+        EngineeringWorkflow workflow = workflow();
+        WorkflowTask implementation = new WorkflowTask(UUID.randomUUID(), "Implement",
+                TaskType.IMPLEMENTATION, Set.of(), GateDefinition.none(),
+                GateDefinition.none(), 2);
+        WorkflowTask validation = task(TaskType.VALIDATION,
+                Set.of(implementation.getId()), GateDefinition.dependenciesSucceeded(),
+                GateDefinition.none());
+        workflow.addTask(implementation);
+        workflow.addTask(validation);
+        AtomicInteger validationRuns = new AtomicInteger();
+
+        WorkflowEngine engine = engine(List.of(
+                handler(TaskType.IMPLEMENTATION, () -> {
+                    throw new IllegalStateException("Compiler rejected generated source");
+                }),
+                handler(TaskType.VALIDATION, () -> {
+                    validationRuns.incrementAndGet();
+                    return TaskExecutionResult.empty();
+                })));
+
+        engine.execute(workflow);
+
+        assertThat(implementation.getAttempts()).isEqualTo(2);
+        assertThat(implementation.getStatus()).isEqualTo(TaskStatus.FAILED);
+        assertThat(validation.getStatus()).isEqualTo(TaskStatus.BLOCKED);
+        assertThat(validationRuns).hasValue(0);
+        assertThat(workflow.getStatus()).isEqualTo(WorkflowStatus.FAILED);
+    }
+
+    @Test
+    void safeStopBlocksPendingWorkAndPreventsExecution() {
+        EngineeringWorkflow workflow = workflow();
+        WorkflowTask task = task(TaskType.IMPLEMENTATION, Set.of(),
+                GateDefinition.none(), GateDefinition.none());
+        workflow.addTask(task);
+        AtomicInteger executions = new AtomicInteger();
+        WorkflowEngine engine = engine(List.of(handler(TaskType.IMPLEMENTATION, () -> {
+            executions.incrementAndGet();
+            return TaskExecutionResult.empty();
+        })));
+
+        engine.safeStop(workflow, "Operator identified a policy risk");
+
+        assertThat(workflow.getStatus()).isEqualTo(WorkflowStatus.SAFE_STOPPED);
+        assertThat(task.getStatus()).isEqualTo(TaskStatus.BLOCKED);
+        assertThat(executions).hasValue(0);
+        assertThat(ledger.findByWorkflowId(workflow.getId()))
+                .extracting("type").contains(DecisionType.SAFE_STOPPED);
+    }
+
     private WorkflowEngine engine(List<WorkflowTaskHandler> handlers) {
         return new WorkflowEngine(
                 new WorkflowGraphValidator(),

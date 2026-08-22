@@ -1,8 +1,10 @@
 # Reviewer Guide
 
-This guide demonstrates the three assessment scenarios using deterministic mode,
-so no paid model credential or network model call is required. The same logical
-agents use the OpenAI provider when `MODEL_PROVIDER=openai`.
+This guide uses deterministic mode for reproducible, credential-free verification
+of orchestration, controls and executable validation. It is intentionally a
+bounded scenario generator, not evidence of general model reasoning. For genuine
+requirement interpretation and repository-specific generation, run the same
+logical agents with `MODEL_PROVIDER=openai`; only the model adapter changes.
 
 ## Start
 
@@ -154,3 +156,34 @@ cannot create or safe-stop workflows. The model cannot choose shell commands,
 repository roots, retry counts, patch
 limits or approval policy. It proposes structured engineering decisions; the
 deterministic orchestrator owns effects and governance.
+
+## POSIX shell quick check
+
+Linux and macOS reviewers can run the same brownfield path with `curl`:
+
+```bash
+export AGENT_OPERATOR_USERNAME=operator
+export AGENT_OPERATOR_PASSWORD=local-operator-password
+export AGENT_APPROVER_USERNAME=approver
+export AGENT_APPROVER_PASSWORD=local-approver-password
+export MODEL_PROVIDER=deterministic
+docker compose up -d postgres
+./mvnw spring-boot:run
+```
+
+In another shell:
+
+```bash
+BASE=http://localhost:8080/api/v1
+curl -u operator:local-operator-password "$BASE/engineering-scenarios"
+curl -u operator:local-operator-password -H 'Content-Type: application/json' \
+  -H 'X-Correlation-ID: posix-review' -d '{
+    "scenarioType":"BROWNFIELD",
+    "requirement":"Add total and daily UTC redirect analytics",
+    "repositoryPath":"url-shortener"
+  }' "$BASE/engineering-workflows"
+curl -u operator:local-operator-password http://localhost:8080/actuator/prometheus
+```
+
+Use returned workflow and release-task IDs with the endpoints above. Release
+approval must use `-u approver:local-approver-password`.

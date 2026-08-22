@@ -73,14 +73,16 @@ are included in this repository.
 
 ## Model providers
 
-The default provider is deterministic and requires no credential:
+The default provider is deterministic and requires no credential. It is a bounded,
+repeatable test double for CI and reviewer scenarios, not general reasoning:
 
 ```powershell
 $env:MODEL_PROVIDER = "deterministic"
 .\mvnw.cmd spring-boot:run
 ```
 
-The same agent contracts can use the real OpenAI Responses API:
+The same agent contracts use the real OpenAI Responses API for open-ended,
+repository-grounded engineering generation:
 
 ```powershell
 $env:MODEL_PROVIDER = "openai"

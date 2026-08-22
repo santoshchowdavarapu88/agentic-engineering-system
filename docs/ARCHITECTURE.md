@@ -108,5 +108,8 @@ Prometheus endpoint exposes these as `agentic_*` series.
 - The deterministic provider intentionally produces a bounded generated change;
   richer URL-analytics output is added by the scenario harness.
 - Maven is the only executable build capability currently exposed.
+  `BuildCapability` and `BuildCommandRunner` are the controlled extension seam:
+  Gradle or npm support adds a bounded adapter and allowlisted command mapping,
+  never a model-supplied shell string.
 - The platform produces a reviewed workspace outcome, not a direct commit or
   deployment to an external repository.
