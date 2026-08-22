@@ -2,6 +2,9 @@ package com.santhosh.agentic_engineering_system.orchestration.domain;
 
 public enum DecisionType {
     WORKFLOW_STARTED,
+    CLARIFICATION_REQUIRED,
+    CLARIFICATION_PROVIDED,
+    PLAN_GENERATED,
     TASK_STARTED,
     TASK_SUCCEEDED,
     TASK_RETRY_SCHEDULED,

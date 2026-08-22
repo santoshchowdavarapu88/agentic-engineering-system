@@ -144,6 +144,11 @@ public final class WorkflowEngine {
         execute(workflow);
     }
 
+    public void resumeAfterClarification(EngineeringWorkflow workflow) {
+        workflow.resumeAfterClarification();
+        execute(workflow);
+    }
+
     public void safeStop(EngineeringWorkflow workflow, String reason) {
         workflow.safeStop();
         record(workflow, null, DecisionType.SAFE_STOPPED, reason);

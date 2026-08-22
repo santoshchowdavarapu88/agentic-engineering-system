@@ -28,11 +28,18 @@ is the primary product.
 - Deterministic offline provider for repeatable tests and demonstrations
 - Real OpenAI Responses API provider with strict JSON-schema outputs
 - Model request timeout, output bounds and environment-only credentials
+- REST-submitted engineering workflows backed by isolated repository revisions
+- Requirement-first execution with ambiguity-driven clarification pauses
+- Dynamic scenario-aware task expansion after requirement interpretation
+- Repository context flowing into architecture, implementation and test agents
+- Generated implementation, test and documentation proposals retained in
+  versioned workflow context
+- Human approval required before release readiness can complete
 
-The agents now produce structured reasoning and source/test proposals. They do
-not yet write repository files or execute commands; controlled patch/build
-tools, durable audit storage, dynamic replanning and the three executable
-assessment scenarios are delivered in later commits.
+The agents now run as one stateful engineering workflow and produce structured
+reasoning and source/test proposals. They do not yet write repository files or
+execute commands; controlled patch/build tools, durable audit storage and the
+three executable assessment scenarios are delivered in later commits.
 
 ## Model providers
 
@@ -108,6 +115,53 @@ Check readiness:
 
 ```powershell
 Invoke-RestMethod http://localhost:8080/actuator/health/readiness
+```
+
+## Submit an engineering workflow
+
+The repository path must be relative to `AGENT_REPOSITORY_ROOT`, which defaults
+to `./scenario-repositories`.
+
+```powershell
+$workflow = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/api/v1/engineering-workflows" `
+  -ContentType "application/json" `
+  -Body (@{
+    scenarioType = "BROWNFIELD"
+    requirement = "Add total and daily redirect analytics"
+    repositoryPath = "url-shortener"
+  } | ConvertTo-Json)
+
+$workflow | Select-Object id, status, contextRevision
+$workflow.tasks | Format-Table id, type, status, attempts, approvalRequired
+```
+
+An ambiguous workflow returns `AWAITING_CLARIFICATION`. Resume it with:
+
+```powershell
+$workflow = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/clarification" `
+  -ContentType "application/json" `
+  -Body (@{
+    clarification = "Track total redirects per short code and daily UTC counts; expose both through a read-only API."
+  } | ConvertTo-Json)
+```
+
+Clear workflows stop at `AWAITING_APPROVAL`. Select the release task and approve
+it explicitly:
+
+```powershell
+$releaseTask = $workflow.tasks |
+  Where-Object { $_.approvalRequired -eq $true } |
+  Select-Object -First 1
+
+$workflow = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/api/v1/engineering-workflows/$($workflow.id)/tasks/$($releaseTask.id)/approval" `
+  -ContentType "application/json" `
+  -Body '{"actor":"reviewer@example.com"}'
 ```
 
 ## Delivery roadmap

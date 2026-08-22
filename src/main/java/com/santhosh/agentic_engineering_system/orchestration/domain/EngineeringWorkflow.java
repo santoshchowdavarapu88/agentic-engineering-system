@@ -32,7 +32,9 @@ public final class EngineeringWorkflow {
     }
 
     public synchronized void addTask(WorkflowTask task) {
-        if (status != WorkflowStatus.CREATED) {
+        if (status != WorkflowStatus.CREATED &&
+                status != WorkflowStatus.RUNNING &&
+                status != WorkflowStatus.AWAITING_CLARIFICATION) {
             throw new IllegalStateException(
                     "Tasks can be added only before execution"
             );
@@ -57,6 +59,16 @@ public final class EngineeringWorkflow {
 
     public synchronized void resumeAfterApproval() {
         requireStatus(WorkflowStatus.AWAITING_APPROVAL);
+        status = WorkflowStatus.RUNNING;
+    }
+
+    public synchronized void awaitClarification() {
+        requireStatus(WorkflowStatus.RUNNING);
+        status = WorkflowStatus.AWAITING_CLARIFICATION;
+    }
+
+    public synchronized void resumeAfterClarification() {
+        requireStatus(WorkflowStatus.AWAITING_CLARIFICATION);
         status = WorkflowStatus.RUNNING;
     }
 
